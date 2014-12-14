@@ -384,7 +384,7 @@ func (pd *PdfDrawerT) Interpret(rdr fancy.Reader) {
 
 func NewPdfDrawer() *PdfDrawerT {
 	r := new(PdfDrawerT)
-	r.Stack = stacks.NewStack(1024)
+	r.Stack = stacks.NewStack(10 * 1024)
 	r.Ops = make(map[string]func(pd *PdfDrawerT))
 	for k := range PdfOps {
 		r.Ops[k] = PdfOps[k]
