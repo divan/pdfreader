@@ -429,27 +429,31 @@ func (pd *PdfReaderT) PageFonts(page []byte) DictionaryT {
 }
 
 // Load() loads a PDF file of a given name.
-func Load(fn string) *PdfReaderT {
+func Load(fn string) (*PdfReaderT, error) {
+	var err error
 	r := new(PdfReaderT)
 	r.File = fn
-	r.rdr = fancy.FileReader(fn)
+	r.rdr, err = fancy.FileReader(fn)
+	if err != nil {
+		return nil, err
+	}
 	if r.Startxref = xrefStart(r.rdr); r.Startxref == -1 {
-		return nil
+		return nil, nil
 	}
 	if r.Xref = xrefRead(r.rdr, r.Startxref); r.Xref == nil {
-		return nil
+		return nil, nil
 	}
 	r.rdr.Seek(int64(xrefSkip(r.rdr, r.Startxref)), 0)
 	s, _ := ps.Token(r.rdr)
 	if string(s) != "trailer" {
-		return nil
+		return nil, nil
 	}
 	s, _ = ps.Token(r.rdr)
 	if r.Trailer = Dictionary(s); r.Trailer == nil {
-		return nil
+		return nil, nil
 	}
 	r.rcache = make(map[string][]byte)
 	r.rncache = make(map[string]int)
 	r.dicache = make(map[string]DictionaryT)
-	return r
+	return r, nil
 }

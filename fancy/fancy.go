@@ -242,16 +242,16 @@ func ReadAndClose(f io.ReadCloser, err error) []byte {
 	return r
 }
 
-func FileReader(fn string) Reader {
+func FileReader(fn string) (Reader, error) {
 	dir, err := os.Stat(fn)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	fil, err := os.Open(fn)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return SecReader(fil, int64(dir.Size()))
+	return SecReader(fil, int64(dir.Size())), nil
 }
 
 func ReadAll(f io.Reader) []byte {
