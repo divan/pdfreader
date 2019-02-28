@@ -8,10 +8,12 @@
 // Enhanced input.
 package fancy
 
-import "os"
-import "io"
-import "io/ioutil"
-import "bufio"
+import (
+	"bufio"
+	"io"
+	"io/ioutil"
+	"os"
+)
 
 type Reader interface {
 	ReadAt(buf []byte, pos int64) (n int, err error)
