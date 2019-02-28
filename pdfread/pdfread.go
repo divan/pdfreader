@@ -11,11 +11,13 @@ package pdfread
 import (
 	"compress/zlib"
 	"encoding/ascii85"
+	"io"
+	"regexp"
+
 	"github.com/divan/pdfreader/fancy"
 	"github.com/divan/pdfreader/hex"
 	"github.com/divan/pdfreader/lzw"
 	"github.com/divan/pdfreader/ps"
-	"regexp"
 )
 
 // limits
@@ -434,6 +436,36 @@ func Load(fn string) (*PdfReaderT, error) {
 	r := new(PdfReaderT)
 	r.File = fn
 	r.rdr, err = fancy.FileReader(fn)
+	if err != nil {
+		return nil, err
+	}
+	if r.Startxref = xrefStart(r.rdr); r.Startxref == -1 {
+		return nil, nil
+	}
+	if r.Xref = xrefRead(r.rdr, r.Startxref); r.Xref == nil {
+		return nil, nil
+	}
+	r.rdr.Seek(int64(xrefSkip(r.rdr, r.Startxref)), 0)
+	s, _ := ps.Token(r.rdr)
+	if string(s) != "trailer" {
+		return nil, nil
+	}
+	s, _ = ps.Token(r.rdr)
+	if r.Trailer = Dictionary(s); r.Trailer == nil {
+		return nil, nil
+	}
+	r.rcache = make(map[string][]byte)
+	r.rncache = make(map[string]int)
+	r.dicache = make(map[string]DictionaryT)
+	return r, nil
+}
+
+// LoadReader() loads a PDF file of a given name.
+func LoadReader(rr io.ReaderAt, length int, fn string) (*PdfReaderT, error) {
+	var err error
+	r := new(PdfReaderT)
+	r.File = fn
+	r.rdr = fancy.SecReader(rr, int64(length))
 	if err != nil {
 		return nil, err
 	}
